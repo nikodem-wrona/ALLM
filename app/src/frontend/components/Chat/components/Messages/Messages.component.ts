@@ -14,6 +14,13 @@ export class MessagesComponent implements IComponent {
   private handleUpdateMessages(messages: Message[]): void {
     this.messages = messages;
     this.renderMessages();
+
+    // scroll to the bottom of the message list
+    const messageListElement = document.querySelector(
+      `#${this.parentElementId} .message-list`
+    );
+
+    messageListElement.scrollTop = messageListElement.scrollHeight;
   }
 
   public fetchMessages(): void {

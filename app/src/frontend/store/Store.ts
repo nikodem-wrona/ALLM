@@ -1,13 +1,15 @@
 import { BehaviorSubject } from "rxjs";
-import { Message } from "../_shared/types";
+import { Message, Chat } from "../_shared/types";
 import { IPCEventHandler } from "./IPCEventHandler";
 
 export type AppState = {
+  chat: Chat | null;
   messages: Message[];
 };
 
 const initialState: AppState = {
   messages: [],
+  chat: null,
 };
 
 class Store {
@@ -37,9 +39,25 @@ class Store {
     this.state$.next(updatedState);
   }
 
+  setChat(chat: AppState["chat"]) {
+    const currentState = this.state$.getValue();
+    const updatedState = {
+      ...currentState,
+      chat,
+    };
+
+    this.state$.next(updatedState);
+  }
+
   subscribeForMessages(callback: (messages: Message[]) => void) {
     this.state$.subscribe((state) => {
       callback(state.messages);
+    });
+  }
+
+  subscribeForChat(callback: (chat: AppState["chat"]) => void) {
+    this.state$.subscribe((state) => {
+      callback(state.chat);
     });
   }
 }

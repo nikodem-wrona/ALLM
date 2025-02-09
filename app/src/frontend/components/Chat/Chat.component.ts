@@ -1,6 +1,10 @@
 import { IComponent } from "../../_shared/types";
 
-import { InputComponent, MessagesComponent } from "./components";
+import {
+  ChatHeaderComponent,
+  InputComponent,
+  MessagesComponent,
+} from "./components";
 
 const CHAT_COMPONENT_ID = "chat";
 
@@ -12,6 +16,10 @@ export class Chat implements IComponent {
     chatElement.classList.add(CHAT_COMPONENT_ID);
 
     parentElement.appendChild(chatElement);
+
+    const chatHeaderElement = new ChatHeaderComponent(`#${CHAT_COMPONENT_ID}`);
+    chatHeaderElement.render();
+    chatHeaderElement.fetchChat();
 
     const messagesComponent = new MessagesComponent(CHAT_COMPONENT_ID);
     messagesComponent.render();

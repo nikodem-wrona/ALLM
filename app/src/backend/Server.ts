@@ -4,7 +4,11 @@ import {
   RendererEventType,
 } from "./_shared/types";
 import { AppConfigManager } from "./AppConfigManager";
-import { GetChatMessagesHandler, SendMessageHandler } from "./handlers";
+import {
+  GetChatHandler,
+  GetChatMessagesHandler,
+  SendMessageHandler,
+} from "./handlers";
 import { internalEventEmitter } from "./InternalEventEmitter";
 import { OpenAiClient } from "./llm";
 import { SQLiteClient } from "./SQLiteClient";
@@ -12,6 +16,7 @@ import { SQLiteClient } from "./SQLiteClient";
 const EVENTS_TO_LISTEN = [
   MainProcessEventType.MESSAGE_RECEIVED,
   MainProcessEventType.MESSAGES_FETCHED,
+  MainProcessEventType.CHAT_FETCHED,
 ];
 
 export class Server {
@@ -44,6 +49,13 @@ export class Server {
         database,
       })
     );
+
+    this.handlersMap.set(
+      RendererEventType.FETCH_CHAT,
+      new GetChatHandler({
+        database,
+      })
+    );
   }
 
   listenToInternalEvents(
@@ -72,6 +84,11 @@ export class Server {
       case RendererEventType.FETCH_MESSAGES:
         this.handlersMap
           .get(RendererEventType.FETCH_MESSAGES)
+          .handle(event.payload);
+        break;
+      case RendererEventType.FETCH_CHAT:
+        this.handlersMap
+          .get(RendererEventType.FETCH_CHAT)
           .handle(event.payload);
         break;
     }

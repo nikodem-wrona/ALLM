@@ -1,7 +1,7 @@
 import "electron";
 
 declare global {
-  type EventType = "SEND_MESSAGE" | "FETCH_MESSAGES";
+  type EventType = "SEND_MESSAGE" | "FETCH_MESSAGES" | "FETCH_CHAT";
   interface Window {
     electron: {
       sendEvent: (event: {

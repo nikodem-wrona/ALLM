@@ -21,7 +21,9 @@ export class SendMessageHandler {
     content: string,
     role: "user" | "assistant" | "developer",
     totalTokenCost: number
-  ): Promise<void> {
+  ): Promise<{
+    createdAt: string;
+  }> {
     const messageId = v4();
     const messageMetadataId = v4();
 
@@ -35,10 +37,12 @@ export class SendMessageHandler {
       VALUES (?, ?, ?);
     `;
 
+    const createdAt = new Date().toISOString();
+
     await this.dependencies.database.executeQuery(SAVE_MESSAGE_QUERY, [
       messageId,
       content,
-      new Date().toISOString(),
+      createdAt,
       role,
       DEFAULT_CHAT_ID,
     ]);
@@ -48,13 +52,30 @@ export class SendMessageHandler {
       messageId,
       totalTokenCost,
     ]);
+
+    return {
+      createdAt,
+    };
   }
 
   private getPreviousMessages(): Promise<
     Array<{ content: string; role: "user" | "assistant" | "developer" }>
   > {
     const query = `
-      SELECT content, role FROM messages WHERE chat_id = ? ORDER BY created_at DESC;
+      SELECT 
+        content, 
+        role,
+        message_metadata.total_token_cost as total_token_cost
+      FROM 
+        messages 
+      JOIN
+        message_metadata 
+      ON 
+        message_metadata.message_id = messages.id  
+      WHERE 
+        chat_id = ? 
+      ORDER BY 
+        created_at DESC;
     `;
 
     return this.dependencies.database.executeQuery(query, [DEFAULT_CHAT_ID]);
@@ -63,13 +84,19 @@ export class SendMessageHandler {
   public async handle({ content }: SendMessageHandlerPayload): Promise<void> {
     const previousMessages = await this.getPreviousMessages();
 
-    await this.saveMessage(content, "user", 0);
+    const { createdAt: senderMessageCreatedAt } = await this.saveMessage(
+      content,
+      "user",
+      0
+    );
 
     internalEventEmitter.emit(MainProcessEventType.MESSAGE_RECEIVED, {
       type: MainProcessEventType.MESSAGE_RECEIVED,
       payload: {
         content: content,
         type: "sent",
+        totalTokenCost: 0,
+        createdAt: senderMessageCreatedAt,
       },
     });
 
@@ -94,13 +121,19 @@ export class SendMessageHandler {
 
     const { message, totalTokenCost } = response;
 
-    await this.saveMessage(message.content, message.role, totalTokenCost);
+    const { createdAt } = await this.saveMessage(
+      message.content,
+      message.role,
+      totalTokenCost
+    );
 
     internalEventEmitter.emit(MainProcessEventType.MESSAGE_RECEIVED, {
       type: MainProcessEventType.MESSAGE_RECEIVED,
       payload: {
         content: message.content,
         type: "received",
+        totalTokenCost,
+        createdAt,
       },
     });
   }

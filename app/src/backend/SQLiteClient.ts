@@ -72,8 +72,6 @@ export class SQLiteClient {
     this.db = new sqlite3Verbose.Database(this.databaseFile, (err: Error) => {
       if (err) {
         console.error("Error connecting to the database:", err.message);
-      } else {
-        console.log("Connected to the SQLite database.");
       }
     });
   }
