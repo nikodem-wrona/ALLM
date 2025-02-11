@@ -1,10 +1,10 @@
-# ALLM
+# ALLM (WIP)
 
-All llms client
+ALLM is an Electron app that enables the local use of all\* (WIP) LLM models.
 
 ## Configuration
 
-Api keys for providers are stored in app configuration locally, with following structure:
+API keys for providers are stored locally in the application's configuration file using the following structure:
 
 ```json
 {
@@ -17,7 +17,7 @@ Api keys for providers are stored in app configuration locally, with following s
 }
 ```
 
-configuration can be found users home folders:
+The configuration file can be found in the user's home folder.
 
 ### MacOS
 
@@ -32,3 +32,5 @@ Not yet supported
 ### Windows
 
 Not yet supported
+
+\* "all" meaning just these that counts
