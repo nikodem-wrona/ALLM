@@ -1,5 +1,10 @@
 import { appStore } from "../../../../store/Store";
-import { Chat, IComponent } from "../../../../_shared/types";
+import {
+  Chat,
+  IComponent,
+  GetChatMessagesRendererProcessEventPayload,
+  RendererProcessEventType,
+} from "../../../../../_shared";
 
 export class ChatHeaderComponent implements IComponent {
   private parentElementSelector: string;
@@ -11,8 +16,11 @@ export class ChatHeaderComponent implements IComponent {
   }
 
   public fetchChat(): void {
-    window.electron.sendEvent({
-      type: "FETCH_CHAT",
+    window.electron.sendEvent<
+      RendererProcessEventType.FETCH_CHAT,
+      GetChatMessagesRendererProcessEventPayload
+    >({
+      type: RendererProcessEventType.FETCH_CHAT,
       payload: {},
     });
   }

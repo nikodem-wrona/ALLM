@@ -1,3 +1,7 @@
+export enum Provider {
+  OPENAI = "openai",
+}
+
 export enum MessageType {
   SENT = "sent",
   RECEIVED = "received",

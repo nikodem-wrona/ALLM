@@ -1,4 +1,4 @@
-import { IComponent } from "../../_shared/types";
+import { IComponent } from "../../../_shared/types";
 
 import {
   ChatHeaderComponent,

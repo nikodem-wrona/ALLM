@@ -1,4 +1,4 @@
-import { Message, MessageType, IComponent } from "../../../../_shared/types";
+import { Message, MessageType, IComponent } from "../../../../../_shared/types";
 
 type MessageComponentProps = {
   message: Message;

@@ -1,16 +1,20 @@
 import { DEFAULT_CHAT_ID } from "../_shared/consts";
-import { MainProcessEventType } from "../_shared/types";
+import {
+  ChatMessagesFetchedMainProcessEventPayload,
+  GetChatMessagesRendererProcessEventPayload,
+  MainProcessEventType,
+  Message,
+  MessageType,
+} from "../../_shared";
 import { internalEventEmitter } from "../InternalEventEmitter";
-import { SQLiteClient } from "../SQLiteClient";
-
-type GetChatMessagesHandlerDependencies = {
-  database: SQLiteClient;
-};
+import { HandlerDependencies } from "./types";
 
 export class GetChatMessagesHandler {
-  constructor(private dependencies: GetChatMessagesHandlerDependencies) {}
+  constructor(private dependencies: HandlerDependencies) {}
 
-  public async handle(): Promise<void> {
+  public async handle(
+    _: GetChatMessagesRendererProcessEventPayload
+  ): Promise<void> {
     const query = `
       SELECT 
         content, 
@@ -27,31 +31,36 @@ export class GetChatMessagesHandler {
         created_at ASC;
     `;
 
-    const messages = await this.dependencies.database.executeQuery(query, [
+    const results = await this.dependencies.database.executeQuery(query, [
       DEFAULT_CHAT_ID,
     ]);
 
-    internalEventEmitter.emit(MainProcessEventType.MESSAGES_FETCHED, {
+    const messages: Message[] = results.map(
+      ({
+        content,
+        role,
+        total_token_cost,
+        created_at,
+      }: {
+        content: string;
+        role: "user" | "assistant" | "developer";
+        total_token_cost: number;
+        created_at: string;
+      }): Message => ({
+        content,
+        type: role === "user" ? MessageType.SENT : MessageType.RECEIVED,
+        totalTokenCost: total_token_cost,
+        createdAt: created_at,
+      })
+    );
+
+    internalEventEmitter.emit<
+      MainProcessEventType.MESSAGES_FETCHED,
+      ChatMessagesFetchedMainProcessEventPayload
+    >(MainProcessEventType.MESSAGES_FETCHED, {
       type: MainProcessEventType.MESSAGES_FETCHED,
       payload: {
-        messages: messages.map(
-          ({
-            content,
-            role,
-            total_token_cost,
-            created_at,
-          }: {
-            content: string;
-            role: "user" | "assistant" | "developer";
-            total_token_cost: number;
-            created_at: string;
-          }) => ({
-            content,
-            type: role === "user" ? "sent" : "received",
-            totalTokenCost: total_token_cost,
-            createdAt: created_at,
-          })
-        ),
+        messages,
       },
     });
   }

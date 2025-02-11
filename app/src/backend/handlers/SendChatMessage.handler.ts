@@ -1,21 +1,17 @@
-import { DEFAULT_CHAT_ID } from "../_shared/consts";
-import { MainProcessEventType } from "../_shared/types";
-import { internalEventEmitter } from "../InternalEventEmitter";
-import { OpenAiClient } from "../llm";
-import { SQLiteClient } from "../SQLiteClient";
 import { v4 } from "uuid";
 
-type SendMessageHandlerPayload = {
-  content: string;
-};
-
-type SendMessageHandlerDependencies = {
-  openAiClient: OpenAiClient;
-  database: SQLiteClient;
-};
+import { DEFAULT_CHAT_ID } from "../_shared/consts";
+import {
+  MainProcessEventType,
+  MessageReceivedMainProcessEventPayload,
+  MessageType,
+  SendChatMessageRendererProcessEventPayload,
+} from "../../_shared";
+import { internalEventEmitter } from "../InternalEventEmitter";
+import { HandlerDependencies } from "./types";
 
 export class SendMessageHandler {
-  constructor(private dependencies: SendMessageHandlerDependencies) {}
+  constructor(private dependencies: HandlerDependencies) {}
 
   private async saveMessage(
     content: string,
@@ -81,7 +77,9 @@ export class SendMessageHandler {
     return this.dependencies.database.executeQuery(query, [DEFAULT_CHAT_ID]);
   }
 
-  public async handle({ content }: SendMessageHandlerPayload): Promise<void> {
+  public async handle({
+    content,
+  }: SendChatMessageRendererProcessEventPayload): Promise<void> {
     const previousMessages = await this.getPreviousMessages();
 
     const { createdAt: senderMessageCreatedAt } = await this.saveMessage(
@@ -90,11 +88,14 @@ export class SendMessageHandler {
       0
     );
 
-    internalEventEmitter.emit(MainProcessEventType.MESSAGE_RECEIVED, {
+    internalEventEmitter.emit<
+      MainProcessEventType.MESSAGE_RECEIVED,
+      MessageReceivedMainProcessEventPayload
+    >(MainProcessEventType.MESSAGE_RECEIVED, {
       type: MainProcessEventType.MESSAGE_RECEIVED,
       payload: {
         content: content,
-        type: "sent",
+        type: MessageType.SENT,
         totalTokenCost: 0,
         createdAt: senderMessageCreatedAt,
       },
@@ -127,11 +128,14 @@ export class SendMessageHandler {
       totalTokenCost
     );
 
-    internalEventEmitter.emit(MainProcessEventType.MESSAGE_RECEIVED, {
+    internalEventEmitter.emit<
+      MainProcessEventType.MESSAGE_RECEIVED,
+      MessageReceivedMainProcessEventPayload
+    >(MainProcessEventType.MESSAGE_RECEIVED, {
       type: MainProcessEventType.MESSAGE_RECEIVED,
       payload: {
         content: message.content,
-        type: "received",
+        type: MessageType.RECEIVED,
         totalTokenCost,
         createdAt,
       },

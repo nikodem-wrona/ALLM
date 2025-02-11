@@ -1,31 +1,44 @@
-import { MessageType } from "../_shared/types";
+import {
+  ChatFetchedMainProcessEventPayload,
+  ChatMessagesFetchedMainProcessEventPayload,
+  GetChatRendererProcessEventPayload,
+  MainProcessEventType,
+  MessageReceivedMainProcessEventPayload,
+  MessageType,
+  RendererProcessEventType,
+} from "../../_shared";
 import { appStore } from "./Store";
-
-type EventTypes = "MESSAGE_RECEIVED" | "MESSAGES_FETCHED" | "CHAT_FETCHED";
 
 export class IPCEventHandler {
   constructor() {
-    window.electron.onEvent((event: { type: EventTypes; payload: any }) => {
-      switch (event.type) {
-        case "MESSAGE_RECEIVED":
-          this.handleMessageReceived(event.payload);
-          break;
-        case "MESSAGES_FETCHED":
-          this.handleMessagesFetched(event.payload);
-          break;
-        case "CHAT_FETCHED":
-          this.handleChatFetched(event.payload);
-          break;
+    const handlersMap = {
+      [MainProcessEventType.MESSAGE_RECEIVED]: (
+        p: MessageReceivedMainProcessEventPayload
+      ) =>
+        this.handleMessageReceived(p as MessageReceivedMainProcessEventPayload),
+      [MainProcessEventType.MESSAGES_FETCHED]: (
+        p: ChatMessagesFetchedMainProcessEventPayload
+      ) => this.handleMessagesFetched(p),
+
+      [MainProcessEventType.CHAT_FETCHED]: (
+        p: ChatFetchedMainProcessEventPayload
+      ) => this.handleChatFetched(p),
+    };
+
+    window.electron.onEvent((event) => {
+      const { payload, type } = event;
+
+      const handler = handlersMap[type];
+
+      if (handler) {
+        handler(payload as any);
       }
     });
   }
 
-  private handleMessageReceived(payload: {
-    content: string;
-    type: MessageType;
-    totalTokenCost: number;
-    createdAt: string;
-  }) {
+  private handleMessageReceived(
+    payload: MessageReceivedMainProcessEventPayload
+  ) {
     appStore.addMessage({
       content: payload.content,
       type: payload.type,
@@ -33,20 +46,18 @@ export class IPCEventHandler {
       createdAt: payload.createdAt,
     });
 
-    window.electron.sendEvent({
-      type: "FETCH_CHAT",
+    window.electron.sendEvent<
+      RendererProcessEventType.FETCH_CHAT,
+      GetChatRendererProcessEventPayload
+    >({
+      type: RendererProcessEventType.FETCH_CHAT,
       payload: {},
     });
   }
 
-  private handleMessagesFetched(payload: {
-    messages: {
-      content: string;
-      type: string;
-      totalTokenCost: number;
-      createdAt: string;
-    }[];
-  }) {
+  private handleMessagesFetched(
+    payload: ChatMessagesFetchedMainProcessEventPayload
+  ) {
     appStore.setMessages(
       payload.messages.map(({ content, type, totalTokenCost, createdAt }) => ({
         content,
@@ -57,12 +68,7 @@ export class IPCEventHandler {
     );
   }
 
-  private handleChatFetched(payload: {
-    name: string;
-    provider: string;
-    totalTokenCost: number;
-    estimatedCostInUSD: number;
-  }) {
+  private handleChatFetched(payload: ChatFetchedMainProcessEventPayload) {
     appStore.setChat({
       name: payload.name,
       provider: payload.provider,

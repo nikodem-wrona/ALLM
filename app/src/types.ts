@@ -1,15 +1,29 @@
 import "electron";
+import {
+  MainProcessEventType,
+  MainProcessEventsPayloads,
+  RendererProcessEventType,
+  RendererProcessEventsPayloads,
+} from "./_shared";
 
 declare global {
-  type EventType = "SEND_MESSAGE" | "FETCH_MESSAGES" | "FETCH_CHAT";
   interface Window {
     electron: {
-      sendEvent: (event: {
-        type: EventType;
-        payload: Record<string, unknown>;
+      sendEvent: <
+        Event extends RendererProcessEventType,
+        Payload extends RendererProcessEventsPayloads
+      >(event: {
+        type: Event;
+        payload: Payload;
       }) => void;
       onEvent: (
-        callback: (event: { type: string; payload: any }) => void
+        callback: <
+          Event extends MainProcessEventType,
+          Payload extends MainProcessEventsPayloads
+        >(event: {
+          type: Event;
+          payload: Payload;
+        }) => void
       ) => void;
     };
   }

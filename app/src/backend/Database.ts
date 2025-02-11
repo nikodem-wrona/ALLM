@@ -1,8 +1,8 @@
-import { Database } from "sqlite3";
+import { Database as SQLiteClient } from "sqlite3";
 import { DEFAULT_CHAT_ID } from "./_shared/consts";
 
-export class SQLiteClient {
-  private db: Database | null = null;
+export class Database {
+  private db: SQLiteClient | null = null;
   private databaseFile: string;
 
   constructor() {

@@ -1,4 +1,5 @@
 import { EventEmitter } from "node:events";
+import { MainProcessEventType, MainProcessEventsPayloads } from "../_shared";
 
 class InternalEventEmitter {
   private eventEmitter: EventEmitter;
@@ -7,11 +8,26 @@ class InternalEventEmitter {
     this.eventEmitter = new EventEmitter();
   }
 
-  public on(event: string, listener: (payload: any) => void): void {
+  public on(
+    event: MainProcessEventType,
+    listener: (payload: {
+      type: MainProcessEventType;
+      payload: MainProcessEventsPayloads;
+    }) => void
+  ): void {
     this.eventEmitter.on(event, listener);
   }
 
-  public emit(event: string, payload: any): void {
+  public emit<
+    Event extends MainProcessEventType,
+    Payload extends MainProcessEventsPayloads
+  >(
+    event: Event,
+    payload: {
+      type: Event;
+      payload: Payload;
+    }
+  ): void {
     this.eventEmitter.emit(event, payload);
   }
 }

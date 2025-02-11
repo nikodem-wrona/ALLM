@@ -1,14 +1,13 @@
 import { DEFAULT_CHAT_ID } from "../_shared/consts";
-import { MainProcessEventType } from "../_shared/types";
+import {
+  ChatFetchedMainProcessEventPayload,
+  MainProcessEventType,
+} from "../../_shared";
 import { internalEventEmitter } from "../InternalEventEmitter";
-import { SQLiteClient } from "../SQLiteClient";
-
-type GetChatMessagesHandlerDependencies = {
-  database: SQLiteClient;
-};
+import { HandlerDependencies } from "./types";
 
 export class GetChatHandler {
-  constructor(private dependencies: GetChatMessagesHandlerDependencies) {}
+  constructor(private dependencies: HandlerDependencies) {}
 
   public async handle(): Promise<void> {
     const GET_CHAT_DETAILS_QUERY = `
@@ -46,7 +45,10 @@ export class GetChatHandler {
 
     const OPEN_AI_COST_PER_TOKEN = 0.15 / 1000000;
 
-    internalEventEmitter.emit(MainProcessEventType.CHAT_FETCHED, {
+    internalEventEmitter.emit<
+      MainProcessEventType.CHAT_FETCHED,
+      ChatFetchedMainProcessEventPayload
+    >(MainProcessEventType.CHAT_FETCHED, {
       type: MainProcessEventType.CHAT_FETCHED,
       payload: {
         name: chat.name,

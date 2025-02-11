@@ -1,4 +1,8 @@
-import { IComponent } from "../../../../_shared/types";
+import {
+  IComponent,
+  RendererProcessEventType,
+  SendChatMessageRendererProcessEventPayload,
+} from "../../../../../_shared";
 
 export class InputComponent implements IComponent {
   private parentElementId: string;
@@ -60,8 +64,11 @@ export class InputComponent implements IComponent {
         return;
       }
 
-      window.electron.sendEvent({
-        type: "SEND_MESSAGE",
+      window.electron.sendEvent<
+        RendererProcessEventType.SEND_MESSAGE,
+        SendChatMessageRendererProcessEventPayload
+      >({
+        type: RendererProcessEventType.SEND_MESSAGE,
         payload: {
           content: inputElement.value,
         },

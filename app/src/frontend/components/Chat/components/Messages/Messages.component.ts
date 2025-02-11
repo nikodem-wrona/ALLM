@@ -1,5 +1,10 @@
 import { appStore } from "../../../../store/Store";
-import { Message, IComponent } from "../../../../_shared/types";
+import {
+  Message,
+  IComponent,
+  RendererProcessEventType,
+  GetChatMessagesRendererProcessEventPayload,
+} from "../../../../../_shared";
 import { MessageComponent } from "./Message.component";
 
 export class MessagesComponent implements IComponent {
@@ -24,8 +29,11 @@ export class MessagesComponent implements IComponent {
   }
 
   public fetchMessages(): void {
-    window.electron.sendEvent({
-      type: "FETCH_MESSAGES",
+    window.electron.sendEvent<
+      RendererProcessEventType.FETCH_MESSAGES,
+      GetChatMessagesRendererProcessEventPayload
+    >({
+      type: RendererProcessEventType.FETCH_MESSAGES,
       payload: {},
     });
   }

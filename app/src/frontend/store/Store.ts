@@ -1,5 +1,5 @@
 import { BehaviorSubject } from "rxjs";
-import { Message, Chat } from "../_shared/types";
+import { Message, Chat } from "../../_shared/types";
 import { IPCEventHandler } from "./IPCEventHandler";
 
 export type AppState = {

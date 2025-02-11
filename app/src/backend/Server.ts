@@ -1,32 +1,26 @@
 import {
-  IHandler,
+  ENABLED_MAIN_PROCESS_EVENTS,
   MainProcessEventType,
-  RendererEventType,
-} from "./_shared/types";
+  MainProcessEventsPayloads,
+  RendererProcessEventType,
+  RendererProcessEventsPayloads,
+} from "../_shared";
+
 import { AppConfigManager } from "./AppConfigManager";
-import {
-  GetChatHandler,
-  GetChatMessagesHandler,
-  SendMessageHandler,
-} from "./handlers";
+
 import { internalEventEmitter } from "./InternalEventEmitter";
 import { OpenAiClient } from "./llm";
-import { SQLiteClient } from "./SQLiteClient";
-
-const EVENTS_TO_LISTEN = [
-  MainProcessEventType.MESSAGE_RECEIVED,
-  MainProcessEventType.MESSAGES_FETCHED,
-  MainProcessEventType.CHAT_FETCHED,
-];
+import { Database } from "./Database";
+import { createHandlersMap, THandlersMap } from "./handlers";
 
 export class Server {
-  private handlersMap = new Map<RendererEventType, IHandler>();
+  private handlersMap: THandlersMap;
 
   async start() {
     const configManager = new AppConfigManager();
     configManager.loadConfig();
 
-    const database = new SQLiteClient();
+    const database = new Database();
 
     await database.connect();
     await database.initSchema();
@@ -35,62 +29,46 @@ export class Server {
       apiKey: configManager.config.providers.openai.apiKey,
     });
 
-    this.handlersMap.set(
-      RendererEventType.SEND_MESSAGE,
-      new SendMessageHandler({
-        openAiClient,
-        database,
-      })
-    );
-
-    this.handlersMap.set(
-      RendererEventType.FETCH_MESSAGES,
-      new GetChatMessagesHandler({
-        database,
-      })
-    );
-
-    this.handlersMap.set(
-      RendererEventType.FETCH_CHAT,
-      new GetChatHandler({
-        database,
-      })
-    );
+    this.handlersMap = createHandlersMap({
+      openAiClient,
+      database,
+    });
   }
 
   listenToInternalEvents(
     electronIPCMessageSender: (payload: {
       type: MainProcessEventType;
-      payload: any;
+      payload: MainProcessEventsPayloads;
     }) => void
   ) {
-    EVENTS_TO_LISTEN.forEach((event) => {
-      internalEventEmitter.on(event, ({ payload }: { payload: any }) => {
-        electronIPCMessageSender({
-          type: event,
+    ENABLED_MAIN_PROCESS_EVENTS.forEach((event) => {
+      internalEventEmitter.on(
+        event,
+        ({
           payload,
-        });
-      });
+        }: {
+          type: MainProcessEventType;
+          payload: MainProcessEventsPayloads;
+        }) => {
+          electronIPCMessageSender({
+            type: event,
+            payload,
+          });
+        }
+      );
     });
   }
 
-  handleEvent(event: { type: RendererEventType; payload: any }) {
-    switch (event.type) {
-      case RendererEventType.SEND_MESSAGE:
-        this.handlersMap
-          .get(RendererEventType.SEND_MESSAGE)
-          .handle(event.payload);
-        break;
-      case RendererEventType.FETCH_MESSAGES:
-        this.handlersMap
-          .get(RendererEventType.FETCH_MESSAGES)
-          .handle(event.payload);
-        break;
-      case RendererEventType.FETCH_CHAT:
-        this.handlersMap
-          .get(RendererEventType.FETCH_CHAT)
-          .handle(event.payload);
-        break;
+  handleEvent(event: {
+    type: RendererProcessEventType;
+    payload: RendererProcessEventsPayloads;
+  }) {
+    const handler = this.handlersMap[event.type];
+
+    if (!handler) {
+      throw new Error(`Handler for event ${event.type} not found`);
     }
+
+    handler.handle(event.payload as any);
   }
 }
