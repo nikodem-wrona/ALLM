@@ -25,6 +25,10 @@ export class MessagesComponent implements IComponent {
       `#${this.parentElementId} .message-list`
     );
 
+    if (!messageListElement) {
+      return;
+    }
+
     messageListElement.scrollTop = messageListElement.scrollHeight;
   }
 
@@ -42,6 +46,10 @@ export class MessagesComponent implements IComponent {
     const messageListElement = document.querySelector(
       `#${this.parentElementId} .message-list`
     );
+
+    if (!messageListElement) {
+      return;
+    }
 
     messageListElement.innerHTML = "";
 

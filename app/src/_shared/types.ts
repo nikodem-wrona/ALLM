@@ -8,6 +8,7 @@ export enum MessageType {
 }
 
 export type Message = {
+  id: string;
   content: string;
   type: MessageType;
   totalTokenCost: number;

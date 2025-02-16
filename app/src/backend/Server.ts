@@ -12,6 +12,7 @@ import { internalEventEmitter } from "./InternalEventEmitter";
 import { OpenAiClient } from "./llm";
 import { Database } from "./Database";
 import { createHandlersMap, THandlersMap } from "./handlers";
+import { createRepositoriesMap } from "./repositories";
 
 export class Server {
   private handlersMap: THandlersMap;
@@ -25,6 +26,10 @@ export class Server {
     await database.connect();
     await database.initSchema();
 
+    const repositories = createRepositoriesMap({
+      database,
+    });
+
     const openAiClient = new OpenAiClient({
       apiKey: configManager.config.providers.openai.apiKey,
     });
@@ -32,6 +37,7 @@ export class Server {
     this.handlersMap = createHandlersMap({
       openAiClient,
       database,
+      repositories,
     });
   }
 

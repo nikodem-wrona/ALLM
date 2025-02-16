@@ -1,4 +1,10 @@
-import { Message, MessageType, IComponent } from "../../../../../_shared/types";
+import {
+  Message,
+  MessageType,
+  IComponent,
+  RendererProcessEventType,
+  DeleteChatMessageRendererProcessEventPayload,
+} from "../../../../../_shared";
 
 type MessageComponentProps = {
   message: Message;
@@ -39,10 +45,10 @@ export class MessageComponent implements IComponent {
 
     const totalTokensCostElement = document.createElement("span");
     totalTokensCostElement.classList.add("total-token-cost");
-    totalTokensCostElement.textContent = `TC: ${this.props.message.totalTokenCost}`;
+    totalTokensCostElement.textContent = `Tokens: ${this.props.message.totalTokenCost}`;
 
     const timestampElement = document.createElement("span");
-    timestampElement.classList.add("timestamp");
+    timestampElement.classList.add("created-at");
 
     const formattedDate = new Date(this.props.message.createdAt);
     const day = formattedDate.toLocaleDateString();
@@ -52,11 +58,28 @@ export class MessageComponent implements IComponent {
     });
     timestampElement.textContent = `${day} ${hour}`;
 
+    const deleteMessagedButtonElement = document.createElement("button");
+    deleteMessagedButtonElement.innerHTML = `<span class="material-symbols-outlined">delete</span>`;
+    deleteMessagedButtonElement.classList.add("delete-message-button");
+
+    deleteMessagedButtonElement.addEventListener("click", () => {
+      window.electron.sendEvent<
+        RendererProcessEventType.DELETE_CHAT_MESSAGE,
+        DeleteChatMessageRendererProcessEventPayload
+      >({
+        type: RendererProcessEventType.DELETE_CHAT_MESSAGE,
+        payload: {
+          id: this.props.message.id,
+        },
+      });
+    });
+
     parentElement.appendChild(messageContainerElement);
     messageElement.appendChild(messageContentElement);
     messageElement.appendChild(metadataElement);
 
     metadataElement.appendChild(timestampElement);
     metadataElement.appendChild(totalTokensCostElement);
+    metadataElement.appendChild(deleteMessagedButtonElement);
   }
 }

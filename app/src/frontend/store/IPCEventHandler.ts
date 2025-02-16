@@ -1,5 +1,6 @@
 import {
   ChatFetchedMainProcessEventPayload,
+  ChatMessageDeletedMainProcessEventPayload,
   ChatMessagesFetchedMainProcessEventPayload,
   GetChatRendererProcessEventPayload,
   MainProcessEventType,
@@ -14,8 +15,7 @@ export class IPCEventHandler {
     const handlersMap = {
       [MainProcessEventType.MESSAGE_RECEIVED]: (
         p: MessageReceivedMainProcessEventPayload
-      ) =>
-        this.handleMessageReceived(p as MessageReceivedMainProcessEventPayload),
+      ) => this.handleMessageReceived(p),
       [MainProcessEventType.MESSAGES_FETCHED]: (
         p: ChatMessagesFetchedMainProcessEventPayload
       ) => this.handleMessagesFetched(p),
@@ -23,6 +23,9 @@ export class IPCEventHandler {
       [MainProcessEventType.CHAT_FETCHED]: (
         p: ChatFetchedMainProcessEventPayload
       ) => this.handleChatFetched(p),
+      [MainProcessEventType.CHAT_MESSAGE_DELETED]: (
+        p: ChatMessageDeletedMainProcessEventPayload
+      ) => this.handleChatMessageDeleted(p),
     };
 
     window.electron.onEvent((event) => {
@@ -40,6 +43,7 @@ export class IPCEventHandler {
     payload: MessageReceivedMainProcessEventPayload
   ) {
     appStore.addMessage({
+      id: payload.id,
       content: payload.content,
       type: payload.type,
       totalTokenCost: payload.totalTokenCost,
@@ -59,12 +63,15 @@ export class IPCEventHandler {
     payload: ChatMessagesFetchedMainProcessEventPayload
   ) {
     appStore.setMessages(
-      payload.messages.map(({ content, type, totalTokenCost, createdAt }) => ({
-        content,
-        type: type as MessageType,
-        totalTokenCost: totalTokenCost,
-        createdAt,
-      }))
+      payload.messages.map(
+        ({ id, content, type, totalTokenCost, createdAt }) => ({
+          id,
+          content,
+          type: type as MessageType,
+          totalTokenCost: totalTokenCost,
+          createdAt,
+        })
+      )
     );
   }
 
@@ -74,6 +81,15 @@ export class IPCEventHandler {
       provider: payload.provider,
       totalTokenCost: payload.totalTokenCost,
       estimatedCostInUSD: payload.estimatedCostInUSD,
+    });
+  }
+
+  private handleChatMessageDeleted(
+    payload: ChatMessageDeletedMainProcessEventPayload
+  ) {
+    appStore.deleteChatMessage({
+      messageId: payload.id,
+      chatId: payload.chatId,
     });
   }
 }

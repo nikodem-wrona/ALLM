@@ -57,6 +57,8 @@ export class InputComponent implements IComponent {
     const sendButtonElement = document.createElement("button");
     const sendButtonElementId = "send-button";
 
+    sendButtonElement.innerHTML = `<span class="material-symbols-outlined">send</span>`;
+
     sendButtonElement.id = sendButtonElementId;
 
     sendButtonElement.onclick = () => {
@@ -77,7 +79,6 @@ export class InputComponent implements IComponent {
       inputElement.value = "";
     };
 
-    sendButtonElement.textContent = "Send";
     inputSecondRowElement.appendChild(sendButtonElement);
   }
 }

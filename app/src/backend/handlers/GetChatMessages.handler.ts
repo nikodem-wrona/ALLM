@@ -17,6 +17,7 @@ export class GetChatMessagesHandler {
   ): Promise<void> {
     const query = `
       SELECT 
+        messages.id as id,
         content, 
         role, 
         created_at,
@@ -37,16 +38,19 @@ export class GetChatMessagesHandler {
 
     const messages: Message[] = results.map(
       ({
+        id,
         content,
         role,
         total_token_cost,
         created_at,
       }: {
+        id: string;
         content: string;
         role: "user" | "assistant" | "developer";
         total_token_cost: number;
         created_at: string;
       }): Message => ({
+        id,
         content,
         type: role === "user" ? MessageType.SENT : MessageType.RECEIVED,
         totalTokenCost: total_token_cost,

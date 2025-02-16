@@ -18,6 +18,7 @@ export class SendMessageHandler {
     role: "user" | "assistant" | "developer",
     totalTokenCost: number
   ): Promise<{
+    id: string;
     createdAt: string;
   }> {
     const messageId = v4();
@@ -50,6 +51,7 @@ export class SendMessageHandler {
     ]);
 
     return {
+      id: messageId,
       createdAt,
     };
   }
@@ -59,6 +61,7 @@ export class SendMessageHandler {
   > {
     const query = `
       SELECT 
+        messages.id as id,
         content, 
         role,
         message_metadata.total_token_cost as total_token_cost
@@ -82,7 +85,7 @@ export class SendMessageHandler {
   }: SendChatMessageRendererProcessEventPayload): Promise<void> {
     const previousMessages = await this.getPreviousMessages();
 
-    const { createdAt: senderMessageCreatedAt } = await this.saveMessage(
+    const { createdAt: senderMessageCreatedAt, id } = await this.saveMessage(
       content,
       "user",
       0
@@ -94,6 +97,7 @@ export class SendMessageHandler {
     >(MainProcessEventType.MESSAGE_RECEIVED, {
       type: MainProcessEventType.MESSAGE_RECEIVED,
       payload: {
+        id,
         content: content,
         type: MessageType.SENT,
         totalTokenCost: 0,
@@ -122,7 +126,7 @@ export class SendMessageHandler {
 
     const { message, totalTokenCost } = response;
 
-    const { createdAt } = await this.saveMessage(
+    const { createdAt, id: newMessageId } = await this.saveMessage(
       message.content,
       message.role,
       totalTokenCost
@@ -134,6 +138,7 @@ export class SendMessageHandler {
     >(MainProcessEventType.MESSAGE_RECEIVED, {
       type: MainProcessEventType.MESSAGE_RECEIVED,
       payload: {
+        id: newMessageId,
         content: message.content,
         type: MessageType.RECEIVED,
         totalTokenCost,

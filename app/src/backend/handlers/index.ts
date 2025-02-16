@@ -1,4 +1,5 @@
 import { RendererProcessEventType } from "../../_shared";
+import { DeleteChatMessageHandler } from "./DeleteChatMessage.handler";
 import { GetChatHandler } from "./GetChat.handler";
 import { GetChatMessagesHandler } from "./GetChatMessages.handler";
 import { SendMessageHandler } from "./SendChatMessage.handler";
@@ -7,7 +8,10 @@ export * from "./types";
 
 export type THandlersMap = Record<
   RendererProcessEventType,
-  SendMessageHandler | GetChatMessagesHandler | GetChatHandler
+  | SendMessageHandler
+  | GetChatMessagesHandler
+  | GetChatHandler
+  | DeleteChatMessageHandler
 >;
 
 export const createHandlersMap = (
@@ -21,5 +25,7 @@ export const createHandlersMap = (
       dependencies
     ),
     [RendererProcessEventType.FETCH_CHAT]: new GetChatHandler(dependencies),
+    [RendererProcessEventType.DELETE_CHAT_MESSAGE]:
+      new DeleteChatMessageHandler(dependencies),
   };
 };

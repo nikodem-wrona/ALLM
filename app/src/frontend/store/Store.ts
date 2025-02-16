@@ -3,13 +3,18 @@ import { Message, Chat } from "../../_shared/types";
 import { IPCEventHandler } from "./IPCEventHandler";
 
 export type AppState = {
-  chat: Chat | null;
+  chat: Chat;
   messages: Message[];
 };
 
 const initialState: AppState = {
   messages: [],
-  chat: null,
+  chat: {
+    name: "",
+    provider: "",
+    totalTokenCost: 0,
+    estimatedCostInUSD: 0,
+  },
 };
 
 class Store {
@@ -58,6 +63,18 @@ class Store {
   subscribeForChat(callback: (chat: AppState["chat"]) => void) {
     this.state$.subscribe((state) => {
       callback(state.chat);
+    });
+  }
+
+  deleteChatMessage({ messageId }: { messageId: string; chatId: string }) {
+    const currentState = this.state$.getValue();
+    const updatedMessages = currentState.messages.filter(
+      (message) => message.id !== messageId
+    );
+
+    this.state$.next({
+      ...currentState,
+      messages: updatedMessages,
     });
   }
 }

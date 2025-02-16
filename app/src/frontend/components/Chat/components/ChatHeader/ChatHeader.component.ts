@@ -32,10 +32,17 @@ export class ChatHeaderComponent implements IComponent {
 
   private renderChat(): void {
     const chatTitleElement = document.querySelector(".chat-title");
+
+    if (!chatTitleElement) {
+      return;
+    }
+
     chatTitleElement.textContent = this.chat.name;
 
     const numberOfTokensElement = document.querySelector(".number-of-tokens");
-    numberOfTokensElement.textContent = `Tokens burned: ${this.chat.totalTokenCost}`;
+    numberOfTokensElement.textContent = `Tokens burned: ${
+      this.chat.totalTokenCost || 0
+    }`;
 
     const estimatedCostInUSDElement = document.querySelector(
       ".estimated-cost-in-usd"
